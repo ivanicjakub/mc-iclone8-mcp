@@ -70,12 +70,22 @@ def get_animation_clips(args):
     clips = []
     for index in range(skeleton.GetClipCount()):
         clip = skeleton.GetClip(index)
-        clips.append({
+        info = {
             "index": index,
             "type": rl_string(clip.GetType()),
             "speed": clip.GetSpeed(),
             "loop_count": clip.GetLoopCount(),
-        })
+        }
+        # Scene frame range of the clip (start + length incl. speed/loops), for export ranges.
+        try:
+            fps = RLPy.RGlobal.GetFps()
+            start = clip.ClipTimeToSceneTime(RLPy.RTime())
+            end = clip.ClipTimeToSceneTime(clip.GetClipLength())
+            info["start_frame"] = fps.GetFrameIndex(start)
+            info["end_frame"] = fps.GetFrameIndex(end)
+        except Exception as exc:
+            info["range_error"] = str(exc)
+        clips.append(info)
     return {"avatar": avatar.GetName(), "clip_count": len(clips), "clips": clips}
 
 

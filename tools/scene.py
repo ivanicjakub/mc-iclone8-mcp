@@ -76,7 +76,7 @@ def link_object(args):
             raise ValueError("Bone %s not found on %s (list names with get_skin_bones)" % (args["target_bone"], target.GetName()))
         target = bones[0]
     alignments = {
-        "none": "ELinkObjectAlignType_None",
+        "none": "ELinkObjectAlignType__None",
         "position": "ELinkObjectAlignType_Position",
         "position_and_rotation": "ELinkObjectAlignType_Position_And_Rotation",
     }

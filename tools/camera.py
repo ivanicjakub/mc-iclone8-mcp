@@ -144,9 +144,19 @@ def set_current_camera(args):
 
 def set_camera_look_at(args):
     camera = _find(args.get("name"))
-    target = find_by_name(args["target_name"])
+    camera.Update()  # a position key set just before is not in WorldTransform yet
     view_position = camera.WorldTransform().T()
-    view_target = target.WorldTransform().T()
+    if "target_point" in args:
+        point = args["target_point"]
+        if isinstance(point, str):  # clients with a stale schema send unknown objects as JSON text
+            import json
+            point = json.loads(point)
+        view_target = RLPy.RVector3(float(point["x"]), float(point["y"]), float(point["z"]))
+        target_label = "point"
+    else:
+        target = find_by_name(args["target_name"])
+        view_target = target.WorldTransform().T()
+        target_label = target.GetName()
     forward = view_position - view_target
     forward.Normalize()
     up_axis = RLPy.RVector3(RLPy.RVector3.UNIT_Z)
@@ -165,7 +175,7 @@ def set_camera_look_at(args):
     for axis, value in zip(("X", "Y", "Z"), rotation):
         block.SetData("Rotation/Rotation" + axis, time, RLPy.RVariant(value))
     camera.Update()
-    return {"status": "ok", "camera": camera.GetName(), "target": target.GetName()}
+    return {"status": "ok", "camera": camera.GetName(), "target": target_label}
 
 
 def register(registry):
@@ -178,4 +188,4 @@ def register(registry):
     registry["remove_camera_dof_keys"] = {"handler": remove_camera_dof_keys, "main_thread": True, "description": "Removes all depth of field keys from the camera.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}}}
     registry["remove_camera_focal_keys"] = {"handler": remove_camera_focal_keys, "main_thread": True, "description": "Removes all focal length keys from the camera.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}}}
     registry["set_current_camera"] = {"handler": set_current_camera, "main_thread": True, "description": "Activates a scene camera for the viewport and rendering.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}}, "required": ["name"]}}
-    registry["set_camera_look_at"] = {"handler": set_camera_look_at, "main_thread": True, "description": "Points a camera at an object at the current frame by creating rotation keys.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}, "target_name": {"type": "string"}}, "required": ["target_name"]}}
+    registry["set_camera_look_at"] = {"handler": set_camera_look_at, "main_thread": True, "description": "Points a camera at an object (or at target_point) at the current frame by creating rotation keys.", "inputSchema": {"type": "object", "properties": {"name": {"type": "string"}, "target_name": {"type": "string"}, "target_point": {"type": "object"}}}}

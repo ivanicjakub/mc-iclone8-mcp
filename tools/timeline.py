@@ -24,10 +24,17 @@ def get_timeline(_args):
         "current_frame": _frame(current, fps),
         "start_frame": _frame(start, fps),
         "end_frame": _frame(end, fps),
+        "project_length_frames": _frame(RLPy.RGlobal.GetProjectLength(), fps),
     }
 
 
 def set_timeline(args):
+    if "end_frame" in args:
+        end = _time(int(args["end_frame"]), RLPy.RGlobal.GetFps())
+        RLPy.RGlobal.SetProjectLength(end)  # SetEndTime alone leaves the playhead clamped to the old length
+        RLPy.RGlobal.SetEndTime(end)
+        if "frame" not in args and "milliseconds" not in args:
+            return get_timeline({})
     if "frame" in args:
         target = _time(args["frame"], RLPy.RGlobal.GetFps())
     elif "milliseconds" in args:
@@ -78,7 +85,7 @@ def clear_scene_animations(args):
 
 def register(registry):
     registry["get_timeline"] = {"handler": get_timeline, "main_thread": True, "description": "Returns the timeline FPS, playback state and bounds.", "inputSchema": {"type": "object", "properties": {}}}
-    registry["set_timeline"] = {"handler": set_timeline, "main_thread": True, "description": "Moves the playhead by frame or milliseconds.", "inputSchema": {"type": "object", "properties": {"frame": {"type": "integer"}, "milliseconds": {"type": "integer"}}}}
+    registry["set_timeline"] = {"handler": set_timeline, "main_thread": True, "description": "Moves the playhead by frame or milliseconds; end_frame sets the timeline end.", "inputSchema": {"type": "object", "properties": {"frame": {"type": "integer"}, "milliseconds": {"type": "integer"}, "end_frame": {"type": "integer"}}}}
     registry["play_timeline"] = {"handler": play, "main_thread": True, "description": "Starts timeline playback.", "inputSchema": {"type": "object", "properties": {"start_frame": {"type": "integer"}, "end_frame": {"type": "integer"}}}}
     registry["pause_timeline"] = {"handler": pause, "main_thread": True, "description": "Pauses the timeline.", "inputSchema": {"type": "object", "properties": {}}}
     registry["stop_timeline"] = {"handler": stop, "main_thread": True, "description": "Stops the timeline.", "inputSchema": {"type": "object", "properties": {}}}

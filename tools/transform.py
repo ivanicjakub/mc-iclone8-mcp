@@ -5,12 +5,17 @@ from tools.objects import find_by_name
 
 
 def get_transform(args):
-    transform = find_by_name(args["name"]).LocalTransform()
+    obj = find_by_name(args["name"])
+    transform = obj.LocalTransform()
     position, scale = transform.T(), transform.S()
+    world = obj.WorldTransform()  # a linked prop ignores its local position/rotation; this is where it really is
+    world_position, q = world.T(), world.R()
     return {
         "name": args["name"],
         "position": {"x": position.x, "y": position.y, "z": position.z},
         "scale": {"x": scale.x, "y": scale.y, "z": scale.z},
+        "world_position": {"x": world_position.x, "y": world_position.y, "z": world_position.z},
+        "world_rotation_quaternion": {"x": q.X(), "y": q.Y(), "z": q.Z(), "w": q.W()},
     }
 
 
